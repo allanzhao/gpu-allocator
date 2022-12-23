@@ -75,34 +75,34 @@ impl ImGuiRenderer {
             ];
 
             let set_layout_infos =
-                [vk::DescriptorSetLayoutCreateInfo::builder().bindings(&bindings)];
+                [vk::DescriptorSetLayoutCreateInfo::default().bindings(&bindings)];
             let set_layouts = set_layout_infos
                 .iter()
                 .map(|info| unsafe { device.create_descriptor_set_layout(info, None) })
                 .collect::<Result<Vec<_>, vk::Result>>()?;
 
-            let layout_info = vk::PipelineLayoutCreateInfo::builder().set_layouts(&set_layouts);
+            let layout_info = vk::PipelineLayoutCreateInfo::default().set_layouts(&set_layouts);
             let pipeline_layout = unsafe { device.create_pipeline_layout(&layout_info, None) }?;
 
             (pipeline_layout, set_layouts)
         };
 
         let render_pass = {
-            let attachments = vk::AttachmentDescription::builder()
+            let attachments = vk::AttachmentDescription::default()
                 .format(render_target_format)
                 .samples(vk::SampleCountFlags::TYPE_1)
                 .load_op(vk::AttachmentLoadOp::CLEAR)
                 .store_op(vk::AttachmentStoreOp::STORE)
                 .final_layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL);
 
-            let subpass_attachment = vk::AttachmentReference::builder()
+            let subpass_attachment = vk::AttachmentReference::default()
                 .attachment(0)
                 .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL);
-            let subpass_description = vk::SubpassDescription::builder()
+            let subpass_description = vk::SubpassDescription::default()
                 .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
                 .color_attachments(std::slice::from_ref(&subpass_attachment));
 
-            let dependencies = vk::SubpassDependency::builder()
+            let dependencies = vk::SubpassDependency::default()
                 .src_subpass(vk::SUBPASS_EXTERNAL)
                 .src_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
                 .dst_access_mask(
@@ -111,7 +111,7 @@ impl ImGuiRenderer {
                 )
                 .dst_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT);
 
-            let render_pass_create_info = vk::RenderPassCreateInfo::builder()
+            let render_pass_create_info = vk::RenderPassCreateInfo::default()
                 .attachments(std::slice::from_ref(&attachments))
                 .subpasses(std::slice::from_ref(&subpass_description))
                 .dependencies(std::slice::from_ref(&dependencies));
@@ -122,7 +122,7 @@ impl ImGuiRenderer {
             let vs = include_bytes!("./spirv/imgui.vs.spv");
 
             #[allow(clippy::cast_ptr_alignment)]
-            let shader_info = vk::ShaderModuleCreateInfo::builder().code(unsafe {
+            let shader_info = vk::ShaderModuleCreateInfo::default().code(unsafe {
                 assert_eq!(vs.len() % 4, 0);
                 std::slice::from_raw_parts(vs.as_ptr().cast(), vs.len() / 4)
             });
@@ -132,7 +132,7 @@ impl ImGuiRenderer {
             let ps = include_bytes!("./spirv/imgui.ps.spv");
 
             #[allow(clippy::cast_ptr_alignment)]
-            let shader_info = vk::ShaderModuleCreateInfo::builder().code(unsafe {
+            let shader_info = vk::ShaderModuleCreateInfo::default().code(unsafe {
                 assert_eq!(ps.len() % 4, 0);
                 std::slice::from_raw_parts(ps.as_ptr().cast(), ps.len() / 4)
             });
@@ -140,11 +140,11 @@ impl ImGuiRenderer {
         };
 
         let pipeline = {
-            let vertex_stage = vk::PipelineShaderStageCreateInfo::builder()
+            let vertex_stage = vk::PipelineShaderStageCreateInfo::default()
                 .stage(vk::ShaderStageFlags::VERTEX)
                 .module(vs_module)
                 .name(std::ffi::CStr::from_bytes_with_nul(b"main\0").unwrap());
-            let fragment_stage = vk::PipelineShaderStageCreateInfo::builder()
+            let fragment_stage = vk::PipelineShaderStageCreateInfo::default()
                 .stage(vk::ShaderStageFlags::FRAGMENT)
                 .module(ps_module)
                 .name(std::ffi::CStr::from_bytes_with_nul(b"main\0").unwrap());
@@ -175,21 +175,21 @@ impl ImGuiRenderer {
                     offset: 16,
                 },
             ];
-            let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::builder()
+            let vertex_input_state = vk::PipelineVertexInputStateCreateInfo::default()
                 .vertex_binding_descriptions(&vertex_binding_descriptions)
                 .vertex_attribute_descriptions(&vertex_attribute_descriptions);
-            let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::builder()
+            let input_assembly_state = vk::PipelineInputAssemblyStateCreateInfo::default()
                 .topology(vk::PrimitiveTopology::TRIANGLE_LIST);
-            let viewport_state = vk::PipelineViewportStateCreateInfo::builder()
+            let viewport_state = vk::PipelineViewportStateCreateInfo::default()
                 .viewport_count(1)
                 .scissor_count(1);
-            let rasterization_state = vk::PipelineRasterizationStateCreateInfo::builder()
+            let rasterization_state = vk::PipelineRasterizationStateCreateInfo::default()
                 .polygon_mode(vk::PolygonMode::FILL)
                 .cull_mode(vk::CullModeFlags::NONE)
                 .front_face(vk::FrontFace::CLOCKWISE)
                 .depth_bias_enable(false)
                 .line_width(1.0);
-            let multisample_state = vk::PipelineMultisampleStateCreateInfo::builder()
+            let multisample_state = vk::PipelineMultisampleStateCreateInfo::default()
                 .rasterization_samples(vk::SampleCountFlags::TYPE_1);
             let noop_stencil_state = vk::StencilOpState {
                 fail_op: vk::StencilOp::KEEP,
@@ -198,7 +198,7 @@ impl ImGuiRenderer {
                 compare_op: vk::CompareOp::ALWAYS,
                 ..Default::default()
             };
-            let depth_stencil_state = vk::PipelineDepthStencilStateCreateInfo::builder()
+            let depth_stencil_state = vk::PipelineDepthStencilStateCreateInfo::default()
                 .depth_test_enable(false)
                 .depth_write_enable(false)
                 .depth_compare_op(vk::CompareOp::ALWAYS)
@@ -207,7 +207,7 @@ impl ImGuiRenderer {
                 .front(noop_stencil_state)
                 .back(noop_stencil_state)
                 .max_depth_bounds(1.0);
-            let attachments = vk::PipelineColorBlendAttachmentState::builder()
+            let attachments = vk::PipelineColorBlendAttachmentState::default()
                 .blend_enable(true)
                 .src_color_blend_factor(vk::BlendFactor::SRC_ALPHA)
                 .dst_color_blend_factor(vk::BlendFactor::ONE_MINUS_SRC_ALPHA)
@@ -221,13 +221,13 @@ impl ImGuiRenderer {
                         | vk::ColorComponentFlags::B
                         | vk::ColorComponentFlags::A
                 });
-            let color_blend_state = vk::PipelineColorBlendStateCreateInfo::builder()
+            let color_blend_state = vk::PipelineColorBlendStateCreateInfo::default()
                 .logic_op(vk::LogicOp::CLEAR)
                 .attachments(std::slice::from_ref(&attachments));
-            let dynamic_state = vk::PipelineDynamicStateCreateInfo::builder()
+            let dynamic_state = vk::PipelineDynamicStateCreateInfo::default()
                 .dynamic_states(&[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR]);
 
-            let pipeline_create_info = vk::GraphicsPipelineCreateInfo::builder()
+            let pipeline_create_info = vk::GraphicsPipelineCreateInfo::default()
                 .stages(&stages)
                 .vertex_input_state(&vertex_input_state)
                 .input_assembly_state(&input_assembly_state)
@@ -259,7 +259,7 @@ impl ImGuiRenderer {
             let image_usage = vk::ImageUsageFlags::SAMPLED
                 | vk::ImageUsageFlags::TRANSFER_DST
                 | vk::ImageUsageFlags::TRANSFER_SRC;
-            let create_info = vk::ImageCreateInfo::builder()
+            let create_info = vk::ImageCreateInfo::default()
                 .image_type(vk::ImageType::TYPE_2D)
                 .format(vk::Format::R8G8B8A8_UNORM)
                 .extent(vk::Extent3D {
@@ -289,7 +289,7 @@ impl ImGuiRenderer {
                 .unwrap();
 
             // Create image view
-            let view_create_info = vk::ImageViewCreateInfo::builder()
+            let view_create_info = vk::ImageViewCreateInfo::default()
                 .image(image)
                 .view_type(vk::ImageViewType::TYPE_2D)
                 .format(vk::Format::R8G8B8A8_UNORM)
@@ -310,7 +310,7 @@ impl ImGuiRenderer {
 
             // Create upload buffer
             let (upload_buffer, upload_buffer_memory) = {
-                let create_info = vk::BufferCreateInfo::builder()
+                let create_info = vk::BufferCreateInfo::default()
                     .size((font_atlas.width * font_atlas.height * 4) as u64)
                     .usage(vk::BufferUsageFlags::TRANSFER_SRC);
                 let buffer = unsafe { device.create_buffer(&create_info, None) }?;
@@ -358,7 +358,7 @@ impl ImGuiRenderer {
                 &[],
                 |device, cmd| {
                     {
-                        let layout_transition_barriers = vk::ImageMemoryBarrier::builder()
+                        let layout_transition_barriers = vk::ImageMemoryBarrier::default()
                             .image(image)
                             .dst_access_mask(vk::AccessFlags::TRANSFER_WRITE)
                             .new_layout(vk::ImageLayout::TRANSFER_DST_OPTIMAL)
@@ -384,7 +384,7 @@ impl ImGuiRenderer {
                         };
                     }
 
-                    let regions = vk::BufferImageCopy::builder()
+                    let regions = vk::BufferImageCopy::default()
                         .buffer_offset(0)
                         .buffer_row_length(font_atlas.width)
                         .buffer_image_height(font_atlas.height)
@@ -411,7 +411,7 @@ impl ImGuiRenderer {
                     };
 
                     {
-                        let layout_transition_barriers = vk::ImageMemoryBarrier::builder()
+                        let layout_transition_barriers = vk::ImageMemoryBarrier::default()
                             .image(image)
                             .dst_access_mask(vk::AccessFlags::SHADER_READ)
                             .new_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
@@ -449,7 +449,7 @@ impl ImGuiRenderer {
         };
 
         let sampler = {
-            let create_info = vk::SamplerCreateInfo::builder()
+            let create_info = vk::SamplerCreateInfo::default()
                 .mag_filter(vk::Filter::NEAREST)
                 .min_filter(vk::Filter::NEAREST)
                 .mipmap_mode(vk::SamplerMipmapMode::NEAREST)
@@ -466,7 +466,7 @@ impl ImGuiRenderer {
         let (vertex_buffer, vb_allocation, vb_capacity) = {
             let capacity = 1024 * 1024;
 
-            let create_info = vk::BufferCreateInfo::builder()
+            let create_info = vk::BufferCreateInfo::default()
                 .size(capacity)
                 .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
                 .sharing_mode(vk::SharingMode::EXCLUSIVE);
@@ -491,7 +491,7 @@ impl ImGuiRenderer {
         let (index_buffer, ib_allocation, ib_capacity) = {
             let capacity = 1024 * 1024;
 
-            let create_info = vk::BufferCreateInfo::builder()
+            let create_info = vk::BufferCreateInfo::default()
                 .size(capacity)
                 .usage(vk::BufferUsageFlags::INDEX_BUFFER)
                 .sharing_mode(vk::SharingMode::EXCLUSIVE);
@@ -514,7 +514,7 @@ impl ImGuiRenderer {
             (buffer, allocation, capacity)
         };
         let (constant_buffer, cb_allocation) = {
-            let create_info = vk::BufferCreateInfo::builder()
+            let create_info = vk::BufferCreateInfo::default()
                 .size(std::mem::size_of::<ImGuiCBuffer>() as u64)
                 .usage(vk::BufferUsageFlags::UNIFORM_BUFFER)
                 .sharing_mode(vk::SharingMode::EXCLUSIVE);
@@ -538,32 +538,32 @@ impl ImGuiRenderer {
         };
 
         let descriptor_sets = {
-            let alloc_info = vk::DescriptorSetAllocateInfo::builder()
+            let alloc_info = vk::DescriptorSetAllocateInfo::default()
                 .descriptor_pool(descriptor_pool)
                 .set_layouts(&descriptor_set_layouts);
             let descriptor_sets = unsafe { device.allocate_descriptor_sets(&alloc_info) }?;
 
-            let buffer_info = vk::DescriptorBufferInfo::builder()
+            let buffer_info = vk::DescriptorBufferInfo::default()
                 .buffer(constant_buffer)
                 .offset(0)
                 .range(std::mem::size_of::<ImGuiCBuffer>() as u64);
-            let uniform_buffer = vk::WriteDescriptorSet::builder()
+            let uniform_buffer = vk::WriteDescriptorSet::default()
                 .dst_set(descriptor_sets[0])
                 .dst_binding(0)
                 .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
                 .buffer_info(std::slice::from_ref(&buffer_info));
 
-            let image_info = vk::DescriptorImageInfo::builder().sampler(sampler);
-            let sampler = vk::WriteDescriptorSet::builder()
+            let image_info = vk::DescriptorImageInfo::default().sampler(sampler);
+            let sampler = vk::WriteDescriptorSet::default()
                 .dst_set(descriptor_sets[0])
                 .dst_binding(1)
                 .descriptor_type(vk::DescriptorType::SAMPLER)
                 .image_info(std::slice::from_ref(&image_info));
 
-            let image_info = vk::DescriptorImageInfo::builder()
+            let image_info = vk::DescriptorImageInfo::default()
                 .image_view(font_image_view)
                 .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL);
-            let sampled_image = vk::WriteDescriptorSet::builder()
+            let sampled_image = vk::WriteDescriptorSet::default()
                 .dst_set(descriptor_sets[0])
                 .dst_binding(2)
                 .descriptor_type(vk::DescriptorType::SAMPLED_IMAGE)
@@ -642,7 +642,7 @@ impl ImGuiRenderer {
             };
         }
 
-        let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
+        let render_pass_begin_info = vk::RenderPassBeginInfo::default()
             .render_pass(self.render_pass)
             .framebuffer(framebuffer)
             .render_area(vk::Rect2D {
@@ -663,7 +663,7 @@ impl ImGuiRenderer {
 
         unsafe { device.cmd_bind_pipeline(cmd, vk::PipelineBindPoint::GRAPHICS, self.pipeline) };
 
-        let viewport = vk::Viewport::builder()
+        let viewport = vk::Viewport::default()
             .x(0.0)
             .y(0.0)
             .width(window_width as f32)

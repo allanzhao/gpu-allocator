@@ -144,12 +144,12 @@ impl MemoryBlock {
         buffer_device_address: bool,
     ) -> Result<Self> {
         let device_memory = {
-            let alloc_info = vk::MemoryAllocateInfo::builder()
+            let alloc_info = vk::MemoryAllocateInfo::default()
                 .allocation_size(size)
                 .memory_type_index(mem_type_index as u32);
 
             let allocation_flags = vk::MemoryAllocateFlags::DEVICE_ADDRESS;
-            let mut flags_info = vk::MemoryAllocateFlagsInfo::builder().flags(allocation_flags);
+            let mut flags_info = vk::MemoryAllocateFlagsInfo::default().flags(allocation_flags);
             // TODO(manon): Test this based on if the device has this feature enabled or not
             let alloc_info = if buffer_device_address {
                 alloc_info.push_next(&mut flags_info)

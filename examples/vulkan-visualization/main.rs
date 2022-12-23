@@ -32,7 +32,7 @@ fn main() -> ash::prelude::VkResult<()> {
     let instance = {
         let app_name = CString::new("gpu-allocator examples vulkan-visualization").unwrap();
 
-        let appinfo = vk::ApplicationInfo::builder()
+        let appinfo = vk::ApplicationInfo::default()
             .application_name(&app_name)
             .application_version(0)
             .engine_name(&app_name)
@@ -48,7 +48,7 @@ fn main() -> ash::prelude::VkResult<()> {
         let surface_extensions =
             ash_window::enumerate_required_extensions(event_loop.raw_display_handle()).unwrap();
 
-        let create_info = vk::InstanceCreateInfo::builder()
+        let create_info = vk::InstanceCreateInfo::default()
             .application_info(&appinfo)
             .enabled_layer_names(&layers_names_raw)
             .enabled_extension_names(surface_extensions);
@@ -114,11 +114,11 @@ fn main() -> ash::prelude::VkResult<()> {
         };
         let priorities = [1.0];
 
-        let queue_info = vk::DeviceQueueCreateInfo::builder()
+        let queue_info = vk::DeviceQueueCreateInfo::default()
             .queue_family_index(queue_family_index as u32)
             .queue_priorities(&priorities);
 
-        let create_info = vk::DeviceCreateInfo::builder()
+        let create_info = vk::DeviceCreateInfo::default()
             .queue_create_infos(std::slice::from_ref(&queue_info))
             .enabled_extension_names(&device_extension_names_raw)
             .enabled_features(&features);
@@ -164,7 +164,7 @@ fn main() -> ash::prelude::VkResult<()> {
         .unwrap_or(vk::PresentModeKHR::FIFO);
     let swapchain_loader = ash::extensions::khr::Swapchain::new(&instance, &device);
 
-    let swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
+    let swapchain_create_info = vk::SwapchainCreateInfoKHR::default()
         .surface(surface)
         .min_image_count(desired_image_count)
         .image_color_space(surface_format.color_space)
@@ -181,12 +181,12 @@ fn main() -> ash::prelude::VkResult<()> {
     let swapchain =
         unsafe { swapchain_loader.create_swapchain(&swapchain_create_info, None) }.unwrap();
 
-    let pool_create_info = vk::CommandPoolCreateInfo::builder()
+    let pool_create_info = vk::CommandPoolCreateInfo::default()
         .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
         .queue_family_index(queue_family_index as u32);
     let command_pool = unsafe { device.create_command_pool(&pool_create_info, None) }.unwrap();
 
-    let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::builder()
+    let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::default()
         .command_buffer_count(2)
         .command_pool(command_pool)
         .level(vk::CommandBufferLevel::PRIMARY);
@@ -200,7 +200,7 @@ fn main() -> ash::prelude::VkResult<()> {
     let mut present_image_views = present_images
         .iter()
         .map(|&image| {
-            let create_view_info = vk::ImageViewCreateInfo::builder()
+            let create_view_info = vk::ImageViewCreateInfo::default()
                 .view_type(vk::ImageViewType::TYPE_2D)
                 .format(surface_format.format)
                 .components(vk::ComponentMapping {
@@ -233,7 +233,7 @@ fn main() -> ash::prelude::VkResult<()> {
         .unwrap(),
     );
 
-    let fence_create_info = vk::FenceCreateInfo::builder().flags(vk::FenceCreateFlags::SIGNALED);
+    let fence_create_info = vk::FenceCreateInfo::default().flags(vk::FenceCreateFlags::SIGNALED);
     let draw_commands_reuse_fence =
         unsafe { device.create_fence(&fence_create_info, None) }.unwrap();
     let setup_commands_reuse_fence =
@@ -264,7 +264,7 @@ fn main() -> ash::prelude::VkResult<()> {
                 descriptor_count: 1,
             },
         ];
-        let create_info = vk::DescriptorPoolCreateInfo::builder()
+        let create_info = vk::DescriptorPoolCreateInfo::default()
             .max_sets(1)
             .pool_sizes(&pool_sizes);
         unsafe { device.create_descriptor_pool(&create_info, None) }?
@@ -284,7 +284,7 @@ fn main() -> ash::prelude::VkResult<()> {
     let mut framebuffers = present_image_views
         .iter()
         .map(|&view| {
-            let create_info = vk::FramebufferCreateInfo::builder()
+            let create_info = vk::FramebufferCreateInfo::default()
                 .render_pass(imgui_renderer.as_ref().unwrap().render_pass)
                 .attachments(std::slice::from_ref(&view))
                 .width(window_width)
@@ -365,7 +365,7 @@ fn main() -> ash::prelude::VkResult<()> {
                     );
 
                     // Transition swapchain image to present state
-                    let image_barriers = vk::ImageMemoryBarrier::builder()
+                    let image_barriers = vk::ImageMemoryBarrier::default()
                         .src_access_mask(
                             vk::AccessFlags::COLOR_ATTACHMENT_READ
                                 | vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
@@ -394,7 +394,7 @@ fn main() -> ash::prelude::VkResult<()> {
                 },
             );
 
-            let present_create_info = vk::PresentInfoKHR::builder()
+            let present_create_info = vk::PresentInfoKHR::default()
                 .wait_semaphores(std::slice::from_ref(&rendering_complete_semaphore))
                 .swapchains(std::slice::from_ref(&swapchain))
                 .image_indices(std::slice::from_ref(&present_index));

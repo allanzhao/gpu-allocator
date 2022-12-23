@@ -22,7 +22,7 @@ pub(crate) fn record_and_submit_command_buffer<F: FnOnce(&ash::Device, vk::Comma
     .unwrap();
 
     let command_buffer_begin_info =
-        vk::CommandBufferBeginInfo::builder().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
+        vk::CommandBufferBeginInfo::default().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
     unsafe { device.begin_command_buffer(command_buffer, &command_buffer_begin_info) }.unwrap();
 
     f(device, command_buffer);
@@ -30,7 +30,7 @@ pub(crate) fn record_and_submit_command_buffer<F: FnOnce(&ash::Device, vk::Comma
     unsafe { device.end_command_buffer(command_buffer) }.unwrap();
 
     let command_buffers = [command_buffer];
-    let submit_info = vk::SubmitInfo::builder()
+    let submit_info = vk::SubmitInfo::default()
         .wait_semaphores(wait_semaphores)
         .wait_dst_stage_mask(wait_mask)
         .command_buffers(&command_buffers)
